@@ -35,7 +35,7 @@ module Datadog
         @connection = connection_cfg.make_connection(logger: logger, telemetry: telemetry)
 
         # Initialize buffer
-        buffer_max_payload_size ||= (@transport_type == :udp ?
+        buffer_max_payload_size ||= ([:tcp, :udp].include?(@transport_type) ?
                                      UDP_DEFAULT_BUFFER_SIZE : UDS_DEFAULT_BUFFER_SIZE)
 
         if buffer_max_payload_size <= 0
@@ -52,7 +52,7 @@ module Datadog
           overflowing_stategy: buffer_overflowing_stategy,
         )
 
-        sender_queue_size ||= (@transport_type == :udp ?
+        sender_queue_size ||= ([:tcp, :udp].include?(@transport_type) ?
                                UDP_DEFAULT_SENDER_QUEUE_SIZE : UDS_DEFAULT_SENDER_QUEUE_SIZE)
 
         @sender = single_thread ?
@@ -86,13 +86,13 @@ module Datadog
       end
 
       def host
-        return nil unless transport_type == :udp
+        return nil unless [:tcp, :udp].include?(@transport_type)
 
         connection.host
       end
 
       def port
-        return nil unless transport_type == :udp
+        return nil unless [:tcp, :udp].include?(@transport_type)
 
         connection.port
       end

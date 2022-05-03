@@ -16,6 +16,8 @@ module Datadog
         case @transport_type
         when :udp
           UDPConnection.new(@host, @port, **params)
+        when :tcp
+          TCPConnection.new(@host, @port, **params)
         when :uds
           UDSConnection.new(@socket_path, **params)
         end
@@ -29,7 +31,7 @@ module Datadog
       def initialize_with_constructor_args(host: nil, port: nil, socket_path: nil)
         try_initialize_with(host: host, port: port, socket_path: socket_path,
           not_both_error_message: 
-            "Both UDP: (host/port #{host}:#{port}) and UDS (socket_path #{socket_path}) " +
+            "Both TCP/UDP: (host/port #{host}:#{port}) and UDS (socket_path #{socket_path}) " +
             "constructor arguments were given. Use only one or the other.",
           )
       end
@@ -40,7 +42,7 @@ module Datadog
           port: ENV['DD_DOGSTATSD_PORT'] && ENV['DD_DOGSTATSD_PORT'].to_i,
           socket_path: ENV['DD_DOGSTATSD_SOCKET'],
           not_both_error_message:
-            "Both UDP (DD_AGENT_HOST/DD_DOGSTATSD_PORT #{ENV['DD_AGENT_HOST']}:#{ENV['DD_DOGSTATSD_PORT']}) " +
+            "Both TCP/UDP (DD_AGENT_HOST/DD_DOGSTATSD_PORT #{ENV['DD_AGENT_HOST']}:#{ENV['DD_DOGSTATSD_PORT']}) " +
             "and UDS (DD_DOGSTATSD_SOCKET #{ENV['DD_DOGSTATSD_SOCKET']}) environment variables are set. " +
             "Set only one or the other.",
         )
@@ -50,7 +52,8 @@ module Datadog
         try_initialize_with(host: DEFAULT_HOST, port: DEFAULT_PORT)
       end
 
-      def try_initialize_with(host: nil, port: nil, socket_path: nil, not_both_error_message: "")
+      # we want to use tcp by default so for now we're just adding this argument that defaults to true
+      def try_initialize_with(host: nil, port: nil, socket_path: nil, tcp: true, not_both_error_message: "")
         if (host || port) && socket_path
           raise ArgumentError, not_both_error_message
         end
@@ -59,7 +62,7 @@ module Datadog
           @host = host || DEFAULT_HOST
           @port = port || DEFAULT_PORT
           @socket_path = nil
-          @transport_type = :udp
+          @transport_type = tcp ? :tcp : :udp
           return true
         elsif socket_path
           @host = nil

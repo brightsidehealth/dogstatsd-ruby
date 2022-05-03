@@ -19,7 +19,8 @@ module Datadog
       # Rough estimation of maximum telemetry message size without tags
       MAX_TELEMETRY_MESSAGE_SIZE_WT_TAGS = 50 # bytes
 
-      def initialize(flush_interval, global_tags: [], transport_type: :udp)
+      # set transport_type to tcp by default
+      def initialize(flush_interval, global_tags: [], transport_type: :tcp)
         @flush_interval = flush_interval
         @global_tags = global_tags
         @transport_type = transport_type
